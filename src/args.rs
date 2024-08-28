@@ -77,6 +77,8 @@ pub struct List {
 pub struct Add {
     #[arg(help = "task name")]
     pub name: String,
+    #[arg(help = "include current path", long, short)]
+    pub path: bool,
 }
 #[derive(Args, Debug, Clone)]
 #[group(required = true, multiple = false)]
@@ -94,4 +96,3 @@ pub struct IDArg {
     #[command(flatten)]
     pub id: ArgTaskID,
 }
-

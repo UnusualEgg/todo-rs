@@ -116,7 +116,18 @@ fn main() -> ExitCode {
             }
         }
         Commands::Add(args) => {
-            let task = task::Task::new(args.name.clone(), None);
+            let path = if args.path {
+                match std::env::current_dir() {
+                    Ok(p) => Some(p),
+                    Err(e) => {
+                        println!("{}", e);
+                        return ExitCode::FAILURE;
+                    }
+                }
+            } else {
+                None
+            };
+            let task = task::Task::new(args.name.clone(), path);
             tasks.tasks.push(task);
             println!("Added \"{}\"", args.name);
         }

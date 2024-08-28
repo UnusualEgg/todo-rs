@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct Task {
     pub done: bool,
     pub name: String,
-    path: Option<PathBuf>,
+    pub path: Option<PathBuf>,
 }
 impl Task {
     pub fn new(name: String, path: Option<PathBuf>) -> Self {
@@ -19,11 +19,16 @@ impl Task {
 }
 impl Display for Task {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!(
-            "[{}]{}",
-            if self.done { 'X' } else { ' ' },
-            self.name
-        ))
+        let done = if self.done { 'X' } else { ' ' };
+        if let Some(p) = &self.path {
+            return f.write_fmt(format_args!(
+                "[{}]{} @ {}",
+                done,
+                self.name,
+                p.to_string_lossy()
+            ));
+        }
+        f.write_fmt(format_args!("[{}]{}", done, self.name))
     }
 }
 #[derive(Debug, Serialize, Deserialize)]
