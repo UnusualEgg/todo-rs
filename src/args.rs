@@ -57,7 +57,7 @@ pub struct FolderSetDescArgs {
 #[derive(Args, Debug)]
 pub struct FolderAddArgs {
     pub name: String,
-    #[arg(required=false)]
+    #[arg(required=false,default_missing_value="")]
     pub desc: String,
 }
 
