@@ -14,31 +14,33 @@ pub struct CLI {
 //relating to tasks
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    #[clap(alias="a")]
+    #[clap(alias = "a")]
     Add(Add),
-    #[clap(alias="ls")]
+    #[clap(alias = "ls")]
     List,
-    #[clap(alias="rm")]
-    Remove(Rm),
-    #[clap(alias="f")]
+    #[clap(alias = "rm")]
+    Remove(IDArg),
+    #[clap(alias = "f")]
     #[command(subcommand)]
-    Folder(FolderCommands)
+    Folder(FolderCommands),
+    #[clap(alias = "c")]
+    Complete(IDArg),
 }
 
 //relating to folders unless specified
-#[derive(Debug,Subcommand)]
+#[derive(Debug, Subcommand)]
 pub enum FolderCommands {
-    #[clap(alias="a")]
+    #[clap(alias = "a")]
     Add(FolderAddArgs),
-    #[clap(alias="rm")]
-    Remove(Rm),
-    #[clap(alias="ls")]
+    #[clap(alias = "rm")]
+    Remove(IDArg),
+    #[clap(alias = "ls")]
     List(List),
-    #[clap(alias="desc",alias="d")]
+    #[clap(alias = "desc", alias = "d")]
     SetDesc(FolderSetDescArgs),
-    #[clap(alias="ta")]
+    #[clap(alias = "ta")]
     Task(FolderAddTaskArgs),
-    #[clap(alias="trm")]
+    #[clap(alias = "trm")]
     TaskRemove(FolderAddTaskArgs),
 }
 #[derive(Args, Debug)]
@@ -51,16 +53,15 @@ pub struct FolderAddTaskArgs {
 pub struct FolderSetDescArgs {
     #[command(flatten)]
     pub id: ArgTaskID,
-    #[arg(required=false)]
+    #[arg(required = false)]
     pub desc: String,
 }
 #[derive(Args, Debug)]
 pub struct FolderAddArgs {
     pub name: String,
-    #[arg(required=false,default_missing_value="")]
+    #[arg(required = false, default_missing_value = "")]
     pub desc: String,
 }
-
 
 #[derive(Args, Debug)]
 pub struct List {
@@ -68,9 +69,9 @@ pub struct List {
         help="Exclude printing descriptions of folders",
         action=ArgAction::SetFalse,
         default_missing_value="true")]
-    pub desc:bool,
-    #[arg(long,short)]
-    pub tasks:bool,
+    pub desc: bool,
+    #[arg(long, short)]
+    pub tasks: bool,
 }
 #[derive(Args, Debug)]
 pub struct Add {
@@ -89,7 +90,8 @@ pub struct ArgTaskID {
 }
 
 #[derive(Args, Debug)]
-pub struct Rm {
+pub struct IDArg {
     #[command(flatten)]
     pub id: ArgTaskID,
 }
+

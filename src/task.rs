@@ -1,13 +1,10 @@
-use std::{
-    fmt::Display,
-    path::PathBuf,
-};
+use std::{fmt::Display, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Task {
-    done: bool,
+    pub done: bool,
     pub name: String,
     path: Option<PathBuf>,
 }
@@ -47,10 +44,7 @@ impl Folder {
 }
 impl Display for Folder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!(
-            "{}: {}",
-            self.name, self.desc
-        ))
+        f.write_fmt(format_args!("{}: {}", self.name, self.desc))
     }
 }
 pub type ID = usize;

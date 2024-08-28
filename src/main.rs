@@ -1,18 +1,14 @@
+mod args;
 mod dir;
 pub mod task;
-mod args;
 
-use std::{
-    fs::OpenOptions,
-    io::Read, process::ExitCode,
-};
 use args::{ArgTaskID, Commands, FolderCommands, CLI};
 use clap::Parser;
 use dir::get_data_dir;
 use serde::{Deserialize, Serialize};
+use std::{fs::OpenOptions, io::Read, process::ExitCode};
 
-
-const FILE_VER:u32 = 1;
+const FILE_VER: u32 = 1;
 #[derive(Debug, Serialize, Deserialize)]
 struct TaskFile {
     version: u32,
@@ -42,12 +38,15 @@ fn set_tasks(tasks: &TaskFile) {
     std::fs::write(dir::get_data_file(), buf).unwrap()
 }
 
-fn find_task_by_name<'tasks>(tasks: &'tasks TaskFile, name: &str) -> Option<(usize,&'tasks task::Task)> {
-    let filter: Vec<(usize,&task::Task)> = tasks
+fn find_task_by_name<'tasks>(
+    tasks: &'tasks TaskFile,
+    name: &str,
+) -> Option<(usize, &'tasks task::Task)> {
+    let filter: Vec<(usize, &task::Task)> = tasks
         .tasks
         .iter()
         .enumerate()
-        .filter(|(_,task)| task.name.find(name).is_some())
+        .filter(|(_, task)| task.name.find(name).is_some())
         .collect();
     //if multiple then error and tell user
     if filter.len() > 1 {
@@ -62,12 +61,15 @@ fn find_task_by_name<'tasks>(tasks: &'tasks TaskFile, name: &str) -> Option<(usi
     }
     Some(filter[0])
 }
-fn find_folder_by_name<'tasks>(tasks: &'tasks TaskFile, name: &str) -> Option<(usize,&'tasks task::Folder)> {
-    let filter: Vec<(usize,&task::Folder)> = tasks
+fn find_folder_by_name<'tasks>(
+    tasks: &'tasks TaskFile,
+    name: &str,
+) -> Option<(usize, &'tasks task::Folder)> {
+    let filter: Vec<(usize, &task::Folder)> = tasks
         .folders
         .iter()
         .enumerate()
-        .filter(|(_,task)| task.name.find(name).is_some())
+        .filter(|(_, task)| task.name.find(name).is_some())
         .collect();
     //if multiple then error and tell user
     if filter.len() > 1 {
@@ -83,11 +85,11 @@ fn find_folder_by_name<'tasks>(tasks: &'tasks TaskFile, name: &str) -> Option<(u
     Some(filter[0])
 }
 
-fn get_tasks_by_id(tasks: &TaskFile,id:&ArgTaskID) -> Option<Vec<usize>> {
+fn get_tasks_by_id(tasks: &TaskFile, id: &ArgTaskID) -> Option<Vec<usize>> {
     if let Some(id) = id.id {
         Some(vec![(id)])
     } else if let Some(name) = &id.name {
-        find_task_by_name(&tasks, name).map(|(i,_)| vec![i])
+        find_task_by_name(&tasks, name).map(|(i, _)| vec![i])
     } else if id.all {
         Some((0..tasks.tasks.len()).into_iter().collect())
     } else {
@@ -99,21 +101,29 @@ fn main() -> ExitCode {
     let mut tasks = get_tasks();
     let cli = CLI::parse();
     match &cli.commands {
-        Commands::List => {
-            for (i,task) in tasks.tasks.iter().enumerate() {
-                println!("{} {}:", i, task.name);
+        Commands::Complete(args) => {
+            let tasks_result = match get_tasks_by_id(&tasks, &args.id) {
+                Some(x) => x,
+                None => return ExitCode::FAILURE,
+            };
+            for index in tasks_result {
+                tasks.tasks[index].done = true;
             }
-
+        }
+        Commands::List => {
+            for (i, task) in tasks.tasks.iter().enumerate() {
+                println!("[{}] {}:", i, task);
+            }
         }
         Commands::Add(args) => {
             let task = task::Task::new(args.name.clone(), None);
             tasks.tasks.push(task);
-            println!("Added \"{}\"",args.name);
+            println!("Added \"{}\"", args.name);
         }
         Commands::Remove(args) => {
             if let Some(id) = args.id.id {
                 let len = tasks.tasks.len();
-                if id>=len {
+                if id >= len {
                     println!("ID too large/not in list");
                     return ExitCode::FAILURE;
                 }
@@ -124,16 +134,21 @@ fn main() -> ExitCode {
                     if let Ok(index) = folder.tasks.binary_search(&id) {
                         folder.tasks.remove(index);
                     }
-                    folder.tasks.iter_mut().for_each(
-                        |index| if *index>id {(*index)-=1});
+                    folder.tasks.iter_mut().for_each(|index| {
+                        if *index > id {
+                            (*index) -= 1
+                        }
+                    });
                 }
             } else if let Some(name) = &args.id.name {
                 match find_task_by_name(&tasks, name) {
-                    Some((id,_)) => {
+                    Some((id, _)) => {
                         println!("Removed \"{}\"", tasks.tasks[id]);
                         tasks.tasks.remove(id);
                     }
-                    None => {return ExitCode::FAILURE;}
+                    None => {
+                        return ExitCode::FAILURE;
+                    }
                 }
             } else if args.id.all {
                 println!("Removed all");
@@ -146,12 +161,12 @@ fn main() -> ExitCode {
                 FolderCommands::Add(args) => {
                     let folder = task::Folder::new(args.name.clone(), args.desc.clone());
                     tasks.folders.push(folder);
-                    println!("Added \"{}\"",args.name);
+                    println!("Added \"{}\"", args.name);
                 }
                 FolderCommands::Remove(args) => {
                     if let Some(id) = args.id.id {
                         let len = tasks.folders.len();
-                        if id>=len {
+                        if id >= len {
                             println!("ID too large/not in list");
                             return ExitCode::FAILURE;
                         }
@@ -159,11 +174,13 @@ fn main() -> ExitCode {
                         tasks.folders.remove(id);
                     } else if let Some(name) = &args.id.name {
                         match find_folder_by_name(&tasks, name) {
-                            Some((id,_)) => {
+                            Some((id, _)) => {
                                 println!("Removed \"{}\"", tasks.folders[id]);
                                 tasks.folders.remove(id);
                             }
-                            None => {return ExitCode::FAILURE;}
+                            None => {
+                                return ExitCode::FAILURE;
+                            }
                         }
                     } else if args.id.all {
                         println!("Removed all");
@@ -172,13 +189,13 @@ fn main() -> ExitCode {
                 }
                 FolderCommands::List(args) => {
                     for (id, folder) in tasks.folders.iter().enumerate() {
-                        println!("[{}] {}:",id,folder.name);
+                        println!("[{}] {}:", id, folder.name);
                         if args.desc {
-                            println!("({})",folder.desc);
+                            println!("({})", folder.desc);
                         }
                         if args.tasks {
                             for index in folder.tasks.iter() {
-                                println!("\t[{}] {}",index,tasks.tasks[*index]);
+                                println!("\t[{}] {}", index, tasks.tasks[*index]);
                             }
                         }
                     }
@@ -186,14 +203,16 @@ fn main() -> ExitCode {
                 FolderCommands::SetDesc(args) => {
                     if let Some(id) = args.id.id {
                         println!("Set desc of [{}] to \"{}\"", id, args.desc);
-                        tasks.folders[id].desc=args.desc.clone();
+                        tasks.folders[id].desc = args.desc.clone();
                     } else if let Some(name) = &args.id.name {
                         match find_folder_by_name(&tasks, name) {
-                            Some((id,_)) => {
+                            Some((id, _)) => {
                                 println!("Set desc of [{}] to \"{}\"", id, args.desc);
-                                tasks.folders[id].desc=args.desc.clone();
+                                tasks.folders[id].desc = args.desc.clone();
                             }
-                            None => {return ExitCode::FAILURE;}
+                            None => {
+                                return ExitCode::FAILURE;
+                            }
                         }
                     } else if args.id.all {
                         println!("Set desc of all to \"{}\"", args.desc);
@@ -201,10 +220,9 @@ fn main() -> ExitCode {
                     }
                 }
                 FolderCommands::Task(args) => {
-                    let tasks_result = 
-                    match get_tasks_by_id(&tasks, &args.task) {
+                    let tasks_result = match get_tasks_by_id(&tasks, &args.task) {
                         Some(x) => x,
-                        None => return ExitCode::FAILURE
+                        None => return ExitCode::FAILURE,
                     };
                     let id = args.folder;
                     for index in tasks_result {
@@ -213,15 +231,14 @@ fn main() -> ExitCode {
                             println!("Folder already contains that task");
                             return ExitCode::FAILURE;
                         }
-                        println!("Added task to folder [{}]",id);
+                        println!("Added task to folder [{}]", id);
                         tasks.folders[id].tasks.push(index);
                     }
                 }
                 FolderCommands::TaskRemove(args) => {
-                    let tasks_result = 
-                    match get_tasks_by_id(&tasks, &args.task) {
+                    let tasks_result = match get_tasks_by_id(&tasks, &args.task) {
                         Some(x) => x,
-                        None => return ExitCode::FAILURE
+                        None => return ExitCode::FAILURE,
                     };
                     let id = args.folder;
                     for index in tasks_result {
@@ -230,7 +247,7 @@ fn main() -> ExitCode {
                             println!("Folder doesn't contain this task");
                             return ExitCode::FAILURE;
                         }
-                        println!("Removed task from folder [{}]",id);
+                        println!("Removed task from folder [{}]", id);
                         tasks.folders[id].tasks.remove(index);
                     }
                 }
