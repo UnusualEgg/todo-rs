@@ -89,12 +89,12 @@ pub struct Add {
     pub path: bool,
 }
 #[derive(Args, Debug, Clone)]
-#[group(required = true, multiple = false)]
+#[group(required = true)]
 pub struct ArgTaskID {
-    #[arg(short, long)]
-    pub name: Option<String>,
-    #[arg(short, long)]
-    pub id: Option<task::ID>,
+    #[arg(short, long, conflicts_with = "all")]
+    pub name: Vec<String>,
+    #[arg(short, long, conflicts_with = "all")]
+    pub id: Vec<task::ID>,
     #[arg(short, long)]
     pub all: bool,
 }
