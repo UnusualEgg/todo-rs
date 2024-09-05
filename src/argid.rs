@@ -1,7 +1,6 @@
 use std::fmt::Display;
 
 use crate::args;
-use crate::task;
 use crate::TaskFile;
 use args::ArgTaskID;
 
@@ -98,7 +97,7 @@ fn find_task_by_name(task_file: &TaskFile, name: &str) -> Option<usize> {
         .tasks
         .iter()
         .enumerate()
-        .filter(|(i, task)| task.name.find(name).is_some())
+        .filter(|(_, task)| task.name.find(name).is_some())
         .map(|(i, _)| i)
         .collect();
     //if multiple then error and tell user
