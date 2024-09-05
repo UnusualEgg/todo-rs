@@ -25,6 +25,8 @@ pub enum Commands {
     Folder(FolderCommands),
     #[clap(alias = "c")]
     Complete(IDArg),
+    #[clap(alias = "r")]
+    Rename(RenameArgs),
 }
 
 //relating to folders unless specified
@@ -48,6 +50,12 @@ pub struct FolderAddTaskArgs {
     pub folder: usize,
     #[command(flatten)]
     pub task: ArgTaskID,
+}
+#[derive(Args, Debug)]
+pub struct RenameArgs {
+    #[command(flatten)]
+    pub id: ArgTaskID,
+    pub new: String,
 }
 #[derive(Args, Debug)]
 pub struct FolderSetDescArgs {

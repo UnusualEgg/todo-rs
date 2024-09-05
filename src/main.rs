@@ -101,6 +101,15 @@ fn main() -> ExitCode {
     let mut tasks = get_tasks();
     let cli = CLI::parse();
     match &cli.commands {
+        Commands::Rename(args) => {
+            let tasks_result = match get_tasks_by_id(&tasks, &args.id) {
+                Some(x) => x,
+                None => return ExitCode::FAILURE,
+            };
+            for index in tasks_result {
+                tasks.tasks[index].name = args.new.clone();
+            }
+        }
         Commands::Complete(args) => {
             let tasks_result = match get_tasks_by_id(&tasks, &args.id) {
                 Some(x) => x,
